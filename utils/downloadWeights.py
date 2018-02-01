@@ -7,9 +7,7 @@ from keras.applications.vgg16 import *
 from keras.applications.resnet50 import *
 import keras.backend as K
 import tensorflow as tf
-
-from .get_weights_path import *
-from .resnet_helpers import *
+from .resnetHelpers import *
 
 def transfer_FCN_Vgg16(input_shape=(224,224,3),weights_path=None,classes=1):
 

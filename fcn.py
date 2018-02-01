@@ -3,9 +3,9 @@ from random import randrange
 from keras.models import Model
 from keras.optimizers import SGD, Adam, Nadam
 from utils.models import *
-import utils.download_weights as modelweights
+from utils.downloadWeights import transfer_FCN_Vgg16, transfer_FCN_ResNet50
 from utils.SegDataGenerator import *
-from utils.loss_function import *
+from utils.lossFunction import *
 from utils.metrics import *
 from skimage.transform import resize
 
@@ -19,10 +19,10 @@ class FCN:
 			self.weights_path = 'custom_model.h5'
 			self.model = model
 		elif 'vgg16' in model:
-			self.weights_path = modelweights.transfer_FCN_Vgg16(input_shape=input_shape,classes=classes)
+			self.weights_path = transfer_FCN_Vgg16(input_shape=input_shape,classes=classes)
 			self.model = FCN_Vgg16_32s(input_shape=input_shape,weights_path=self.weights_path,classes=classes,regularization=regularization)
 		elif 'res50' in model:
-			self.weights_path = modelweights.transfer_FCN_ResNet50(input_shape)
+			self.weights_path = transfer_FCN_ResNet50(input_shape=input_shape,classes=classes)
 			self.model = FCN_ResNet50_32s(input_shape=input_shape,weights_path=self.weights_path,classes=classes)
 		loss_fn=softmax_sparse_crossentropy_ignoring_last_label
 		if optimizer is None:

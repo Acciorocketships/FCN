@@ -13,7 +13,7 @@ import keras.backend as K
 import tensorflow as tf
 
 from .basics import *
-from .resnet_helpers import *
+from .resnetHelpers import *
 from .BilinearUpSampling import *
 
 
