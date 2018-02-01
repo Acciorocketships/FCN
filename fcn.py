@@ -7,24 +7,26 @@ import utils.download_weights as modelweights
 from utils.SegDataGenerator import *
 from utils.loss_function import *
 from utils.metrics import *
+from skimage.transform import resize
 
 
 class FCN:
 
-	def __init__(self,model,classes,input_shape=(300,300,3),lr=0.1):
+	def __init__(self,model,classes,input_shape=(224,224,3),optimizer=None,learning_rate=0.001,regularization=0.):
 		self.input_shape = input_shape
 		self.classes = classes
 		if isinstance(model,Model):
 			self.weights_path = 'custom_model.h5'
 			self.model = model
 		elif 'vgg16' in model:
-			self.weights_path = modelweights.transfer_FCN_Vgg16(input_shape)
-			self.model = FCN_Vgg16_32s(input_shape=input_shape,weights_path=self.weights_path,classes=classes)
+			self.weights_path = modelweights.transfer_FCN_Vgg16(input_shape=input_shape,classes=classes)
+			self.model = FCN_Vgg16_32s(input_shape=input_shape,weights_path=self.weights_path,classes=classes,regularization=regularization)
 		elif 'res50' in model:
 			self.weights_path = modelweights.transfer_FCN_ResNet50(input_shape)
 			self.model = FCN_ResNet50_32s(input_shape=input_shape,weights_path=self.weights_path,classes=classes)
 		loss_fn=softmax_sparse_crossentropy_ignoring_last_label
-		optimizer = SGD(lr=lr, momentum=0.9)
+		if optimizer is None:
+			optimizer = SGD(lr=learning_rate, momentum=0.9)
 		metrics=[sparse_accuracy_ignoring_last_label]
 		self.model.compile(loss=loss_fn,
 					  optimizer=optimizer,
@@ -86,7 +88,7 @@ class FCN:
 		return gen
 
 
-	def train(self,data_dir,label_dir,val_split=0.,batch_size=8,epochs=10,
+	def train(self,data_dir,label_dir,val_split=0.,batch_size=8,epochs=5,
 			  zoom=0,rotation=0,xshift=0,yshift=0,shear=0,xflip=False,yflip=False,
 			  colorshift=0):
 		gen = self.train_generators(data_dir,label_dir,val_split,batch_size=batch_size,
@@ -102,4 +104,5 @@ class FCN:
 
 	# also handle if img is a list of images or a directory
 	def predict(self,img):
-		pass
+		img = resize(img,self.input_shape[0:2])
+		return self.model.predict(img)

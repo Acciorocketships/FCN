@@ -11,7 +11,7 @@ import tensorflow as tf
 from .get_weights_path import *
 from .resnet_helpers import *
 
-def transfer_FCN_Vgg16(input_shape=(224,224,3),weights_path=None,classes=1000):
+def transfer_FCN_Vgg16(input_shape=(224,224,3),weights_path=None,classes=1):
 
     if weights_path is None:
         weights_path = 'weights/vgg16' + str(input_shape).replace(" ","").replace(",","-") + ".h5"
@@ -74,11 +74,11 @@ def transfer_FCN_Vgg16(input_shape=(224,224,3),weights_path=None,classes=1000):
                 index[layer.name].set_weights(weights)
         model.save_weights(weights_path)
         
-        return weights_path
+    return weights_path
 
  
 
-def transfer_FCN_ResNet50(input_shape=(224,224,3),weights_path=None,classes=1000):
+def transfer_FCN_ResNet50(input_shape=(224,224,3),weights_path=None,classes=1):
 
     if weights_path is None:
         weights_path = 'weights/res50' + str(input_shape).replace(" ","").replace(",","-") + ".h5"
