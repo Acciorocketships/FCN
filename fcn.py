@@ -105,4 +105,5 @@ class FCN:
 	# also handle if img is a list of images or a directory
 	def predict(self,img):
 		img = resize(img,self.input_shape[0:2])
-		return self.model.predict(img)
+		img = np.expand_dims(img,axis=0)
+		return self.model.predict(img)[0]
