@@ -1,10 +1,10 @@
 import os
 from random import randrange
-from keras.callbacks import TensorBoard
+from keras.callbacks import TensorBoard, ModelCheckpoint, LearningRateScheduler
 from keras.models import Model
 from keras.optimizers import SGD, Adam, Nadam
 from utils.models import *
-from utils.downloadweights import transfer_FCN_Vgg16, transfer_FCN_ResNet50
+from utils.downloadweights import *
 from utils.segdatagen import *
 from utils.metrics import *
 from skimage.transform import resize
@@ -19,11 +19,14 @@ class FCN:
 			self.weights_path = 'custom_model.h5'
 			self.model = model
 		elif 'vgg16' in model:
-			self.weights_path = transfer_FCN_Vgg16(input_shape=input_shape,classes=classes)
-			self.model = AtrousFCN_Vgg16_16s(input_shape=input_shape,weights_path=self.weights_path,classes=classes,regularization=regularization)
+			self.weights_path = Vgg16_weights(input_shape=input_shape,classes=classes)
+			self.model = Vgg16(input_shape=input_shape,weights_path=self.weights_path,classes=classes,regularization=regularization)
+		elif 'vgg19' in model:
+			self.weights_path = Vgg19_weights(input_shape=input_shape,classes=classes)
+			self.model = Vgg19(input_shape=input_shape,weights_path=self.weights_path,classes=classes,regularization=regularization)
 		elif 'res50' in model:
-			self.weights_path = transfer_FCN_ResNet50(input_shape=input_shape,classes=classes)
-			self.model = AtrousFCN_ResNet50_16s(input_shape=input_shape,weights_path=self.weights_path,classes=classes,regularization=regularization)
+			self.weights_path = ResNet50_weights(input_shape=input_shape,classes=classes)
+			self.model = ResNet50(input_shape=input_shape,weights_path=self.weights_path,classes=classes,regularization=regularization)
 		if loss is None:
 			loss = softmax_sparse_crossentropy_ignoring_last_label
 		if optimizer is None:
@@ -107,15 +110,20 @@ class FCN:
 		return gen
 
 	# Inputs:
+		# data_dir: directory with training images as jpg (string)
+		# label_dir: directory with training masks as sparse png (string)
 		# val_split: ratio of validation data to total data (float). If val_split is None, then it uses filenames in train.txt and val.txt.
-		# https://keras.io/preprocessing/image/
+		# zoom, rotation, shear, xflip, yflip, colorshift: https://keras.io/preprocessing/image/
 		# savedir: directory to save preprocessed images and labels to (string)
 		# tensorboard: path/filename to save tensorboard logs (string)
+		# learning_rate: sets the learning rate (float). if function, it uses the output as the lr (lambda epoch: 0.001/epoch)
+		# autosave: continuously saves when val_loss improves (boolean)
 		# callbacks: callback, or list of callbacks (https://keras.io/callbacks/)
 	def train(self,data_dir,label_dir,val_split=0.,batch_size=8,epochs=5,
-			  zoom=0,rotation=0,shear=0,xflip=False,yflip=False,
+			  zoom=0,rotation=0,shear=0,xflip=False,yflip=False,colorshift=0
 			  normalization=False,sample_normalization=False,
-			  colorshift=0,savedir=None,tensorboard=None,callbacks=[]):
+			  savedir=None,tensorboard=None,learning_rate=None,autosave=False,
+			  callbacks=[]):
 		if not isinstance(callbacks,list):
 			callbacks = [callbacks]
 		if tensorboard is not None:
@@ -127,6 +135,13 @@ class FCN:
 				webbrowser.open("http://localhost:6006",new=2)
 			except:
 				pass
+		if autosave:
+			callbacks.append(ModelCheckpoint(self.weights_path, monitor='val_loss', verbose=1, save_best_only=True, save_weights_only=True))
+		if learning_rate:
+			if isinstance(learning_rate,float):
+				callbacks.append(LearningRateScheduler(lambda epoch: learning_rate, verbose=1))
+			else:
+				callbacks.append(LearningRateScheduler(learning_rate, verbose=1))
 		gen = self.train_generators(data_dir,label_dir,val_split,batch_size=batch_size,zoom=zoom,rotation=rotation,shear=shear, \
 									xflip=xflip,yflip=yflip,normalization=normalization,sample_normalization=sample_normalization,
 									colorshift=colorshift,savedir=savedir)
@@ -142,7 +157,6 @@ class FCN:
 		self.model.save_weights(self.weights_path)
 		return history
 		
-
 	# Inputs:
 		# image as np array (height,width,channels)
 		# batch of images as np array or list (samples,height,width,channels)
