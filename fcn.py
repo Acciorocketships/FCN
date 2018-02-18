@@ -120,7 +120,7 @@ class FCN:
 		# autosave: continuously saves when val_loss improves (boolean)
 		# callbacks: callback, or list of callbacks (https://keras.io/callbacks/)
 	def train(self,data_dir,label_dir,val_split=0.,batch_size=8,epochs=5,
-			  zoom=0,rotation=0,shear=0,xflip=False,yflip=False,colorshift=0
+			  zoom=0,rotation=0,shear=0,xflip=False,yflip=False,colorshift=0,
 			  normalization=False,sample_normalization=False,
 			  savedir=None,tensorboard=None,learning_rate=None,autosave=False,
 			  callbacks=[]):

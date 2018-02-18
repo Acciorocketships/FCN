@@ -1,13 +1,13 @@
 from imgstream import Stream
 from fcn import *
 
-classifier = FCN('vgg16',7,(224,224,3),regularization=0.)
+classifier = FCN(model='vgg16',classes=8,input_shape=(480,640,3))
 
 stream = Stream(mode='img',src='test')
 for img in stream:
 	mask = classifier.predict(img)
 	combined = stream.mask(mask[:,:,1:4],img,alpha=0.2)
-	stream.show(combined,"Output",shape=(480,720),pause=True)
+	stream.show(combined,"Output",shape=(480,640),pause=True)
 	
 
 
