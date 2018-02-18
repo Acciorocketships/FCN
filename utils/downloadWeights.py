@@ -7,12 +7,12 @@ from keras.applications.vgg16 import *
 from keras.applications.resnet50 import *
 import keras.backend as K
 import tensorflow as tf
-from .resnetHelpers import *
+from .resnethelpers import *
 
 def transfer_FCN_Vgg16(input_shape=(224,224,3),weights_path=None,classes=1):
 
     if weights_path is None:
-        weights_path = 'weights/vgg16' + str(input_shape).replace(" ","").replace(",","-") + ".h5"
+        weights_path = 'weights/vgg16' + str((input_shape[0],input_shape[1],classes)).replace(" ","").replace(",","-") + ".h5"
 
     if not os.path.isfile(weights_path):
 
@@ -49,7 +49,6 @@ def transfer_FCN_Vgg16(input_shape=(224,224,3),weights_path=None,classes=1):
         x = Conv2D(4096, (7, 7), activation='relu', padding='same', name='fc1')(x)
         x = Conv2D(4096, (1, 1), activation='relu', padding='same', name='fc2')(x)
         x = Conv2D(classes, (1, 1), activation='linear', name='output')(x)
-        #x = Reshape((7,7))(x)
 
         # Create model
         model = Model(img_input, x)
@@ -59,15 +58,14 @@ def transfer_FCN_Vgg16(input_shape=(224,224,3),weights_path=None,classes=1):
         for layer in flattened_layers:
             if layer.name:
                 index[layer.name]=layer
-        vgg16 = VGG16()
+        include_top = (input_shape==(224,224,3))
+        vgg16 = VGG16(input_shape=input_shape,include_top=include_top,weights='imagenet')
         for layer in vgg16.layers:
             weights = layer.get_weights()
             if layer.name=='fc1':
                 weights[0] = np.reshape(weights[0], (7,7,512,4096))
             elif layer.name=='fc2':
                 weights[0] = np.reshape(weights[0], (1,1,4096,4096))
-            elif layer.name=='output':
-                weights[0] = np.reshape(weights[0], (1,1,4096,classes))
             if layer.name in index:
                 index[layer.name].set_weights(weights)
         model.save_weights(weights_path)
@@ -79,7 +77,7 @@ def transfer_FCN_Vgg16(input_shape=(224,224,3),weights_path=None,classes=1):
 def transfer_FCN_ResNet50(input_shape=(224,224,3),weights_path=None,classes=1):
 
     if weights_path is None:
-        weights_path = 'weights/res50' + str(input_shape).replace(" ","").replace(",","-") + ".h5"
+        weights_path = 'weights/res50' + str((input_shape[0],input_shape[1],classes)).replace(" ","").replace(",","-") + ".h5"
 
     if not os.path.isfile(weights_path):
 
@@ -121,7 +119,8 @@ def transfer_FCN_ResNet50(input_shape=(224,224,3),weights_path=None,classes=1):
         for layer in flattened_layers:
             if layer.name:
                 index[layer.name]=layer
-        resnet50 = ResNet50()
+        include_top = (input_shape==(224,224,3))
+        resnet50 = ResNet50(input_shape=input_shape,include_top=include_top,weights='imagenet')
         for layer in resnet50.layers:
             weights = layer.get_weights()
             if layer.name=='output':

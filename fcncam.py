@@ -3,11 +3,11 @@ from fcn import *
 
 classifier = FCN('vgg16',7,(224,224,3),regularization=0.)
 
-stream = Stream(mode='img',src='test')
+stream = Stream(mode='cam')
 for img in stream:
 	mask = classifier.predict(img)
 	combined = stream.mask(mask[:,:,1:4],img,alpha=0.2)
-	stream.show(combined,"Output",shape=(480,720),pause=True)
+	stream.show(combined,"Output",shape=(720,1280))
 	
 
 

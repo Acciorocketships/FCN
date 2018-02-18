@@ -2,7 +2,6 @@ import sys
 import os
 import cv2
 import numpy as np
-from scipy.misc import imresize
 
 class Stream:
 
@@ -46,8 +45,7 @@ class Stream:
 				return img
 
 		def getfiles(self,folder):
-			os.chdir(os.path.join(os.getcwd(),folder))
-			self.files = os.listdir(os.getcwd())
+			self.files = os.listdir(os.path.join(os.getcwd(),folder))
 
 		def nextfile(self):
 			while self.filenum < len(self.files)-1:
@@ -67,7 +65,10 @@ class Stream:
 		def pic(self):
 			try:
 				if self.isfolder:
+					currdir = os.getcwd()
+					os.chdir(self.src)
 					image = cv2.imread(self.nextfile())
+					os.chdir(currdir)
 				else:
 					image = cv2.imread(self.src)
 			except Exception as err:
@@ -78,7 +79,10 @@ class Stream:
 			try:
 				success,image = self.stream.read()
 				if not success and self.isfolder:
+					currdir = os.getcwd()
+					os.chdir(self.src)
 					self.stream = cv2.VideoCapture(self.nextfile())
+					os.chdir(currdir)
 					_,image = self.stream.read()
 			except Exception as err:
 				return None
@@ -90,6 +94,22 @@ class Stream:
 				return np.array(image)
 			else:
 				return None
+
+		# X: ndarray
+		# axis: axis to compute values along. Default is the first non-singleton axis.
+		def softmax(X, axis=None):
+			theta = 1.0
+			y = np.atleast_2d(X)
+			if axis is None:
+				axis = next(j[0] for j in enumerate(y.shape) if j[1] > 1)
+			y = y * float(theta)
+			y = y - np.expand_dims(np.max(y, axis = axis), axis)
+			y = np.exp(y)
+			ax_sum = np.expand_dims(np.sum(y, axis = axis), axis)
+			p = y / ax_sum
+			if len(X.shape) == 1: 
+				p = p.flatten()
+			return p
 
 
 		# Public Functions
@@ -109,8 +129,9 @@ class Stream:
 		# type(size)==int: percent of current size
 		# type(size)==float: fraction of current size
 		# type(size)==tuple: new size
-		def resize(self,image,size):
-			return imresize(image,size)
+		def resize(self,image,shape):
+			from skimage.transform import resize
+			return resize(image,shape,preserve_range=True,mode='constant').astype(np.uint8)
 
 		# returns grayscale image
 		def im2gray(self,image):
@@ -119,16 +140,15 @@ class Stream:
 		# if pause=True, then the program will wait on the current frame until
 		# you press a key (hold a key to run in real time)
 		# if pause=False, then the program will run in real time until q is pressed
-		def show(self,image,name=None,pause=False,resize=True):
+		# give 2-tuple shape = (height,width) to resize
+		def show(self,image,name=None,pause=False,shape=None):
 			if name is None:
 				name = str(self.imgnum)
 				self.imgnum += 1
 			if image is None:
 				sys.exit()
-			if resize:
-				vertheight = 600 # Vertical height of the output, if resize=True
-				aspectratio = float(image.shape[1])/float(image.shape[0])
-				image = imresize(image,(vertheight,int(vertheight*aspectratio)))
+			if shape is not None:
+				image = self.resize(image,shape)
 			cv2.imshow(name,image)
 			if pause:
 				if cv2.waitKey(0) & 0xFF == ord('q'):
@@ -136,6 +156,30 @@ class Stream:
 			else:
 				if cv2.waitKey(2) & 0xFF == ord('q'):
 					sys.exit()
+
+		def mask(self,mask,image=None,alpha=0.3):
+			colors = [[1.,0.5,0.5],[0.5,0.5,1.],[0.5,0.1,0.5],[0.8,0.8,0.5],[0.8,0.5,0.8],[0.5,0.8,0.8]]
+			maskout = np.zeros([3,mask.shape[0],mask.shape[1]])
+			if image is None:
+				image = np.zeros(mask.shape[:2])
+				alpha = 0
+			elif image.shape[:2] != mask.shape[:2]:
+				image = self.resize(image,mask.shape[:2])
+			if len(mask.shape)==2:
+				mask = np.expand_dims(mask,axis=2)
+			for i in range(mask.shape[2]):
+				if i < len(colors):
+					color = np.transpose(np.array([[colors[i]]]))
+				else:
+					color = np.random.rand(3,1,1)
+				maskout += mask[:,:,i]*color
+			maskout = np.moveaxis(maskout,0,2)
+			h = np.max(maskout,axis=2)
+			maskout = (h>1)[:,:,np.newaxis]*maskout/h[:,:,np.newaxis] + (h<=1)[:,:,np.newaxis]*maskout # normalizes pixels with channel sum >1
+			output = alpha*image + (1-alpha)*255*maskout
+			return output.astype(np.uint8)
+
+
 
 		# type(mark)== 2-tuple or 2-tuple: (x,y) draws points
 		# type(mark)== 3-tuple or 3-tuple: (x,y,radius) draws circles
