@@ -120,6 +120,13 @@ class FCN:
 			callbacks = [callbacks]
 		if tensorboard is not None:
 			callbacks.append(TensorBoard(log_dir=tensorboard, histogram_freq=0, write_graph=True, write_images=True))
+			try:
+				import subprocess
+				subprocess.Popen(["tensorboard","--logdir",tensorboard])
+				import webbrowser
+				webbrowser.open("http://localhost:6006",new=2)
+			except:
+				pass
 		gen = self.train_generators(data_dir,label_dir,val_split,batch_size=batch_size,zoom=zoom,rotation=rotation,shear=shear, \
 									xflip=xflip,yflip=yflip,normalization=normalization,sample_normalization=sample_normalization,
 									colorshift=colorshift,savedir=savedir)
@@ -131,13 +138,8 @@ class FCN:
 		except KeyboardInterrupt:
 			print('Stopping Training...')
 			self.model.save_weights(self.weights_path)
-			return
+			return None
 		self.model.save_weights(self.weights_path)
-		if tensorboard is not None:
-			try:
-				os.system("tensorboard --logdir " + tensorboard)
-			except:
-				pass
 		return history
 		
 
