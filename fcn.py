@@ -1,4 +1,5 @@
-import os
+import os,sys
+sys.path.append(os.path.dirname(os.path.realpath("")))
 from random import randrange
 from keras.callbacks import TensorBoard, ModelCheckpoint, LearningRateScheduler
 from keras.models import Model
@@ -12,27 +13,38 @@ from skimage.transform import resize
 
 class FCN:
 
-	def __init__(self,model='vgg16',classes=1,input_shape=(224,224,3),optimizer=None,loss=None,accuracy=None,learning_rate=0.001,regularization=0.):
+	def __init__(self,model='vgg16',classes=1,input_shape=(224,224,3),optimizer=None,loss=None,accuracy=None,
+				 learning_rate=0.001,regularization=0.,weights_path=None,loss_weights=None,loss_size_weight=0):
 		self.input_shape = input_shape
 		self.classes = classes
+		# Load Model
 		if isinstance(model,Model):
 			self.weights_path = 'custom_model.h5'
 			self.model = model
 		elif 'vgg16' in model:
-			self.weights_path = Vgg16_weights(input_shape=input_shape,classes=classes)
-			self.model = Vgg16(input_shape=input_shape,weights_path=self.weights_path,classes=classes,regularization=regularization)
+			self.model = Vgg16(input_shape=input_shape,classes=classes,regularization=regularization)
+			self.weights_path = Vgg16_weights(input_shape=input_shape,weights_path=weights_path,model=self.model)
 		elif 'vgg19' in model:
-			self.weights_path = Vgg19_weights(input_shape=input_shape,classes=classes)
-			self.model = Vgg19(input_shape=input_shape,weights_path=self.weights_path,classes=classes,regularization=regularization)
+			self.model = Vgg19(input_shape=input_shape,classes=classes,regularization=regularization)
+			self.weights_path = Vgg19_weights(input_shape=input_shape,weights_path=weights_path,model=self.model)
 		elif 'res50' in model:
-			self.weights_path = ResNet50_weights(input_shape=input_shape,classes=classes)
-			self.model = ResNet50(input_shape=input_shape,weights_path=self.weights_path,classes=classes,regularization=regularization)
+			self.model = Resnet50(input_shape=input_shape,classes=classes,regularization=regularization)
+			self.weights_path = Resnet50_weights(input_shape=input_shape,weights_path=weights_path,model=self.model)
+		# Load Weights
+		try:
+			self.model.load_weights(self.weights_path, by_name=True)
+		except OSError as err:
+			print("No weights to load.")
+			print(err)
+		# Set Up Loss, Optimizer, and Metrics
+		LossWeights.setValues(loss_weights)
+		LossWeights.setSizeWeight(loss_size_weight)
 		if loss is None:
-			loss = softmax_sparse_crossentropy_ignoring_last_label
+			loss = softmax_crossentropy_loss
 		if optimizer is None:
 			optimizer = SGD(lr=learning_rate, momentum=0.9)
 		if accuracy is None:
-			accuracy = [sparse_accuracy_ignoring_last_label]
+			accuracy = [argmax_accuracy]
 		else:
 			accuracy = [accuracy]
 		self.model.compile(loss=loss,
@@ -79,9 +91,9 @@ class FCN:
 			  			 normalization=False,sample_normalization=False,
 			  			 colorshift=0,savedir=None):
 
+		labels = []
 		if val_split is not None:
 			data = self.dir_images(data_dir)
-			labels = []
 			for i in range(int(val_split*len(data))):
 				idx = randrange(0,len(data))
 				labels.append(data[idx])
@@ -101,7 +113,7 @@ class FCN:
 							   shear=shear,xflip=xflip,yflip=yflip, \
 							   normalization=normalization,sample_normalization=sample_normalization, \
 							   colorshift=colorshift,savedir=savedir)
-		if len(labels) > 0:
+		if val_split != 0:
 			gen['val'] = self.datagen(data_dir,label_dir,'val.txt', \
 							   batch_size=batch_size,zoom=zoom,rotation=rotation, \
 							   shear=shear,xflip=xflip,yflip=yflip, \
@@ -119,7 +131,7 @@ class FCN:
 		# learning_rate: sets the learning rate (float). if function, it uses the output as the lr (lambda epoch: 0.001/epoch)
 		# autosave: continuously saves when val_loss improves (boolean)
 		# callbacks: callback, or list of callbacks (https://keras.io/callbacks/)
-	def train(self,data_dir,label_dir,val_split=0.,batch_size=8,epochs=5,
+	def train(self,data_dir,label_dir,val_split=0.,batch_size=8,epochs=5,initial_epoch=0,
 			  zoom=0,rotation=0,shear=0,xflip=False,yflip=False,colorshift=0,
 			  normalization=False,sample_normalization=False,
 			  savedir=None,tensorboard=None,learning_rate=None,autosave=False,
@@ -147,9 +159,9 @@ class FCN:
 									colorshift=colorshift,savedir=savedir)
 		try:
 			if 'val' in gen:
-				history = self.model.fit_generator(generator=gen['train'],validation_data=gen['val'],epochs=epochs,callbacks=callbacks)
+				history = self.model.fit_generator(generator=gen['train'],validation_data=gen['val'],epochs=epochs,initial_epoch=initial_epoch,callbacks=callbacks)
 			else:
-				history = self.model.fit_generator(generator=gen['train'],epochs=epochs,callbacks=callbacks)
+				history = self.model.fit_generator(generator=gen['train'],epochs=epochs,initial_epoch=initial_epoch,callbacks=callbacks)
 		except KeyboardInterrupt:
 			print('Stopping Training...')
 			self.model.save_weights(self.weights_path)
@@ -180,7 +192,10 @@ class FCN:
 			stream = Stream(mode='vid',src=img)
 			for image in stream:
 				output.append(self.predict(image))
-			return np.array(output)
+			if len(output) == 1:
+				return np.array(output[0])
+			else:
+				return np.array(output)
 		img = np.array(img)
 		if self.gen.featurewise_center or self.gen.samplewise_center:
 			img = self.gen.standardize(img)
