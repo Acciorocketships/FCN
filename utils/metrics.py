@@ -9,25 +9,25 @@ class LossWeights:
     values = None
     func = lambda y_true, i: 1
     @staticmethod
-    def setValues(LossWeights):
+    def setValues(weights):
     # dict or list of manual multipliers for the relative weights between classes
     # if you want class index 3 to be 2x more important to get right, set {3:2} or [1,1,1,2,1,...]
-        if isinstance(LossWeights,dict):
-            length = max(LossWeights.keys())
-            LossWeights.values = [1]*length
-            for cls in LossWeights.keys():
-                LossWeights.values[cls] = LossWeights[cls]
-        elif isinstance(LossWeights,list) or isinstance(LossWeights,np.ndarray):
-            LossWeights.values = LossWeights
+        if isinstance(weights,dict):
+            length = max(weights.keys())
+            LossWeights.values = [1]*(length+1)
+            for cls in weights.keys():
+                LossWeights.values[cls] = weights[cls]
+        elif isinstance(weights,list) or isinstance(weights,np.ndarray):
+            LossWeights.values = weights
     @staticmethod
-    def setSizeWeight(SizeWeight):
-    # SizeWeight = 0 means smaller classes and larger classes will have the same weight
-    # if SizeWeight is int/float: coefficient c = exp(SizeWeight - SizeWeight * sizeofclass / (numpixels / numclasses) )
-    # if SizeWeight is 'inv', then coefficient c = (numpixels / numclasses) / sizeofclass
-        if SizeWeight == 'inv':
+    def setSizeWeight(weight):
+    # weight = 0 means smaller classes and larger classes will have the same weight
+    # if weight is int/float: coefficient c = exp(weight - weight * sizeofclass / (numpixels / numclasses) )
+    # if weight is 'inv', then coefficient c = (numpixels / numclasses) / sizeofclass
+        if weight == 'inv':
             LossWeights.func = lambda y_true, i: ( tf.to_float(tf.shape(y_true)[0]) / tf.to_float(tf.shape(y_true)[1]) ) / K.sum(y_true[:,i])
-        elif SizeWeight != 0:
-            LossWeights.func = lambda y_true, i: tf.exp( SizeWeight  -  SizeWeight * K.sum(y_true[:,i]) / ( tf.to_float(tf.shape(y_true)[0]) / tf.to_float(tf.shape(y_true)[1]) ) )
+        elif weight != 0:
+            LossWeights.func = lambda y_true, i: tf.exp( weight  -  weight * K.sum(y_true[:,i]) / ( tf.to_float(tf.shape(y_true)[0]) / tf.to_float(tf.shape(y_true)[1]) ) )
     @staticmethod
     def apply(y_true):
         if LossWeights.values == None:
