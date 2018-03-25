@@ -10,6 +10,8 @@ from utils.segdatagen import *
 from utils.metrics import *
 from skimage.transform import resize
 
+os.environ["CUDA_VISIBLE_DEVICES"] = ""
+
 
 class FCN:
 
