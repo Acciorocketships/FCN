@@ -73,7 +73,34 @@ class Object:
 			self.cov += (pt3-self.mu) @ (pt3-self.mu).T
 			self.cov += (pt4-self.mu) @ (pt4-self.mu).T
 		self.cov /= 4*len(keypoints) - 1
+
+	def eval(self,pt):
+		# 0.1 is approximately the boundary of the pulse
+		pt = np.array(pt)
+		if len(pt.shape) == 1:
+			pt = np.expand_dims(pt,axis=1)
+		return np.exp(-0.5 * (pt-self.mu).T @ np.linalg.inv(self.cov) @ (pt-self.mu)) / (2*np.pi * np.sqrt(np.linalg.det(self.cov)))
 		
+	def eig(self):
+		# eigvals[i] corresponds with eigvecs[:,i]
+		eigvals, eigvecs = np.linalg.eig(self.cov)
+		return (eigvals, eigvecs)
+
+	def size(self):
+		# size([[1,0],[0,1]]) == 1
+		return np.sqrt(np.linalg.det(self.cov))
+
+	def rotation(self):
+		# In radians. If the longer axis is horizontal, rotation is 0
+		_, eigvecs = self.eig()
+		mainaxis = eigvecs[:,0]
+		return (np.arctan(mainaxis[0]/mainaxis[1]) if mainaxis[1]!=0 else np.pi)
+
+	def eccentricity(self):
+		# e=0 is a circle. e=1 is a line.
+		_, eigvals = self.eig()
+		return np.sqrt(1 - (eigvals[1]/eigvals[0])**2)
+
 
 
 
