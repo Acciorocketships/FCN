@@ -5,7 +5,7 @@ from keras.callbacks import TensorBoard, ModelCheckpoint, LearningRateScheduler
 from keras.models import Model
 from keras.optimizers import SGD, Adam, Nadam
 from utils.models import *
-from utils.downloadweights import *
+from utils.downloadWeights import *
 from utils.segdatagen import *
 from utils.metrics import *
 from skimage.transform import resize

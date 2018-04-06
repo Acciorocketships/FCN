@@ -7,7 +7,7 @@ from keras.applications.vgg16 import *
 from keras.applications.resnet50 import *
 import keras.backend as K
 import tensorflow as tf
-from .resnethelpers import *
+from .resnetHelpers import *
 
 
 
