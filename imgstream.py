@@ -157,6 +157,7 @@ class Stream:
         if cv2.waitKey(2) & 0xFF == ord('q'): 
           sys.exit() 
  
+    # TODO: Add argmax and labels
     def mask(self,mask,image=None,alpha=0.3): 
       colors = [[1.,0.5,0.5],[0.5,0.5,1.],[0.5,0.1,0.5],[0.8,0.8,0.5],[0.8,0.5,0.8],[0.5,0.8,0.8]] 
       maskout = np.zeros([3,mask.shape[0],mask.shape[1]]) 
