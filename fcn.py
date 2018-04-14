@@ -23,15 +23,18 @@ class FCN:
 		if isinstance(model,Model):
 			self.weights_path = 'custom_model.h5'
 			self.model = model
-		elif 'vgg16' in model:
+		elif 'vgg16' == model:
 			self.model = Vgg16(input_shape=input_shape,classes=classes,regularization=regularization)
 			self.weights_path = Vgg16_weights(input_shape=input_shape,weights_path=weights_path,model=self.model)
-		elif 'vgg19' in model:
+		elif 'vgg19' == model:
 			self.model = Vgg19(input_shape=input_shape,classes=classes,regularization=regularization)
 			self.weights_path = Vgg19_weights(input_shape=input_shape,weights_path=weights_path,model=self.model)
-		elif 'res50' in model:
+		elif 'res50' == model:
 			self.model = Resnet50(input_shape=input_shape,classes=classes,regularization=regularization)
 			self.weights_path = Resnet50_weights(input_shape=input_shape,weights_path=weights_path,model=self.model)
+		elif 'vgg16_fcn' == model:
+			self.model = Vgg16_FCN(input_shape=input_shape,classes=classes,regularization=regularization)
+			self.weights_path = Vgg16_weights(input_shape=input_shape,weights_path=weights_path,model=self.model)
 		# Load Weights
 		try:
 			self.model.load_weights(self.weights_path, by_name=True)
