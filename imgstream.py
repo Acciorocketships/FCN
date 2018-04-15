@@ -149,15 +149,15 @@ class Stream:
     def mask(mask,image=None,alpha=0.3,argmax=False,labels=[]): 
       colors = [[1.,0.5,0.5],[0.5,0.5,1.],[0.5,0.1,0.5],[0.8,0.8,0.5],[0.8,0.5,0.8],[0.5,0.8,0.8],[0.2,0.7,0.4]] 
       maskout = np.zeros([3,mask.shape[0],mask.shape[1]]) 
-      if image is None: 
-        image = np.zeros(mask.shape[:2]) 
-        alpha = 0 
-      elif image.shape[:2] != mask.shape[:2]: 
-        image = Stream.resize(image,mask.shape[:2]) 
       if len(mask.shape)==2: 
         mask = np.expand_dims(mask,axis=2)
       if mask.shape[2]==1 and image==None:
         colors[0] = [1,1,1]
+      if image is None: 
+        image = np.zeros((mask.shape[0],mask.shape[1],3)) 
+        alpha = 0 
+      elif image.shape[:2] != mask.shape[:2]: 
+        image = Stream.resize(image,mask.shape[:2]) 
       for i in range(mask.shape[2]):
         if i < len(labels) and (labels[i]==None or labels[i]=='Nothing'):
           color = np.zeros((3,1,1))
@@ -206,7 +206,6 @@ class Stream:
     # copy=False: updates original. copy=True: does not edit original, returns new img
     @staticmethod
     def mark(image,marks,color=(0,0,255),xyaxis=False,size=4,copy=False): 
-      color = (color[2],color[1],color[0]) 
  
       if copy: 
         image = np.copy(image) 

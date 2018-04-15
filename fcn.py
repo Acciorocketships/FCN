@@ -34,6 +34,8 @@ class FCN:
 			self.weights_path = Resnet50_weights(input_shape=input_shape,weights_path=weights_path,model=self.model)
 		elif 'vgg16_fcn' == model:
 			self.model = Vgg16_FCN(input_shape=input_shape,classes=classes,regularization=regularization)
+			if weights_path is None:
+				weights_path = 'vgg16_fcn'
 			self.weights_path = Vgg16_weights(input_shape=input_shape,weights_path=weights_path,model=self.model)
 		# Load Weights
 		try:
@@ -153,7 +155,7 @@ class FCN:
 			except:
 				pass
 		if autosave:
-			callbacks.append(ModelCheckpoint(self.weights_path, monitor='val_loss', verbose=1, save_best_only=True, save_weights_only=True))
+			callbacks.append(ModelCheckpoint(self.weights_path, monitor='val_loss', verbose=1, save_best_only=False, save_weights_only=True))
 		if learning_rate:
 			if isinstance(learning_rate,float):
 				callbacks.append(LearningRateScheduler(lambda epoch: learning_rate, verbose=1))

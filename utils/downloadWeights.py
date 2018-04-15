@@ -13,7 +13,9 @@ from .resnetHelpers import *
 
 def Vgg16_weights(input_shape=(224,224,3),weights_path=None,model=None):
 
-    if model is not None and weights_path is None:
+    if weights_path != None and '.h5' not in weights_path:
+        weights_path = 'weights/' + weights_path + '.h5'
+    elif model is not None and weights_path is None:
         classes = int(model.outputs[0]._shape[-1])
         weights_path = 'weights/vgg16' + str((input_shape[0],input_shape[1],classes)).replace(" ","").replace(",","-") + ".h5"
 
