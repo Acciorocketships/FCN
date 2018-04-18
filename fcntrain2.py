@@ -1,6 +1,6 @@
 from fcn import *
 
-model = 'vgg16_fcn'
+model = 'unet'
 shape = (224,224,3)
 
 classifier = FCN(model=model,classes=8,input_shape=shape,loss_size_weight=0)

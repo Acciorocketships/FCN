@@ -19,6 +19,7 @@ class FCN:
 				 learning_rate=0.001,regularization=0.,weights_path=None,loss_weights=None,loss_size_weight=0):
 		self.input_shape = input_shape
 		self.classes = classes
+		self.weights_path = weights_path
 		# Load Model
 		if isinstance(model,Model):
 			self.weights_path = 'custom_model.h5'
@@ -32,11 +33,10 @@ class FCN:
 		elif 'res50' == model:
 			self.model = Resnet50(input_shape=input_shape,classes=classes,regularization=regularization)
 			self.weights_path = Resnet50_weights(input_shape=input_shape,weights_path=weights_path,model=self.model)
-		elif 'vgg16_fcn' == model:
-			self.model = Vgg16_FCN(input_shape=input_shape,classes=classes,regularization=regularization)
+		elif 'unet' == model:
+			self.model = UNet(input_shape=input_shape,classes=classes,regularization=regularization)
 			if weights_path is None:
-				weights_path = 'vgg16_fcn'
-			self.weights_path = Vgg16_weights(input_shape=input_shape,weights_path=weights_path,model=self.model)
+				self.weights_path = 'weights/UNet' + str((input_shape[0],input_shape[1],classes)).replace(" ","").replace(",","-") + '.h5'
 		# Load Weights
 		try:
 			self.model.load_weights(self.weights_path, by_name=True)

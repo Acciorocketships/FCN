@@ -156,80 +156,87 @@ def Resnet50(input_shape=(224,224,3), classes=1, regularization=0., batch_moment
 
 
 
-def Vgg16_FCN(input_shape=(224,224,3), classes=1, weights_path=None, regularization=0.):
+def UNet(input_shape=(224,224,3), classes=1, weights_path=None, regularization=0.):
+    
     img_input = Input(shape=input_shape)
-    image_size = input_shape[0:2]
 
     # 224 x 224 x 3
 
     # Block 1
     x = Conv2D(64, (3, 3), activation='relu', padding='same', name='block1_conv1', kernel_regularizer=l2(regularization))(img_input)
     x = Conv2D(64, (3, 3), activation='relu', padding='same', name='block1_conv2', kernel_regularizer=l2(regularization))(x)
-    x1 = MaxPooling2D((2, 2), strides=(2, 2), name='block1_pool')(x)
+    x1 = Dropout(0.2)(x)
+    x = MaxPooling2D((2, 2), strides=(2, 2), name='block1_pool')(x1)
 
     # 112 x 112 x 64
 
     # Block 2
-    x = Conv2D(128, (3, 3), activation='relu', padding='same', name='block2_conv1', kernel_regularizer=l2(regularization))(x1)
+    x = Conv2D(128, (3, 3), activation='relu', padding='same', name='block2_conv1', kernel_regularizer=l2(regularization))(x)
     x = Conv2D(128, (3, 3), activation='relu', padding='same', name='block2_conv2', kernel_regularizer=l2(regularization))(x)
-    x2 = MaxPooling2D((2, 2), strides=(2, 2), name='block2_pool')(x)
+    x2 = Dropout(0.2)(x)
+    x = MaxPooling2D((2, 2), strides=(2, 2), name='block2_pool')(x2)
 
     # 56 x 56 x 128
 
     # Block 3
-    x = Conv2D(256, (3, 3), activation='relu', padding='same', name='block3_conv1', kernel_regularizer=l2(regularization))(x2)
+    x = Conv2D(256, (3, 3), activation='relu', padding='same', name='block3_conv1', kernel_regularizer=l2(regularization))(x)
     x = Conv2D(256, (3, 3), activation='relu', padding='same', name='block3_conv2', kernel_regularizer=l2(regularization))(x)
-    x = Conv2D(256, (3, 3), activation='relu', padding='same', name='block3_conv3', kernel_regularizer=l2(regularization))(x)
-    x3 = MaxPooling2D((2, 2), strides=(2, 2), name='block3_pool')(x)
+    x3 = Dropout(0.2)(x)
+    x = MaxPooling2D((2, 2), strides=(2, 2), name='block3_pool')(x3)
 
     # 28 x 28 x 256
 
     # Block 4
-    x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block4_conv1', kernel_regularizer=l2(regularization))(x3)
+    x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block4_conv1', kernel_regularizer=l2(regularization))(x)
     x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block4_conv2', kernel_regularizer=l2(regularization))(x)
-    x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block4_conv3', kernel_regularizer=l2(regularization))(x)
-    x4 = MaxPooling2D((2, 2), strides=(2, 2), name='block4_pool')(x)
+    x4 = Dropout(0.2)(x)
+    x = MaxPooling2D((2, 2), strides=(2, 2), name='block4_pool')(x4)
 
     # 14 x 14 x 512
 
     # Block 5
-    x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block5_conv1', kernel_regularizer=l2(regularization))(x4)
-    x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block5_conv2', kernel_regularizer=l2(regularization))(x)
-    x5 = Conv2D(512, (3, 3), activation='relu', padding='same', name='block5_conv3', kernel_regularizer=l2(regularization))(x)
+    x = Conv2D(1024, (3, 3), activation='relu', padding='same', name='block5_conv1', kernel_regularizer=l2(regularization))(x)
+    x = Conv2D(1024, (3, 3), activation='relu', padding='same', name='block5_conv2', kernel_regularizer=l2(regularization))(x)
+    x5 = Dropout(0.2)(x)
 
-    # 14 x 14 x 512
+    # 14 x 14 x 1024
 
-    # Putting together the features
-    x = Conv2D(4096, (7, 7), activation='relu', padding='same', name='masks', kernel_regularizer=l2(regularization))(x5)
-    x = Dropout(0.5)(x)
-    # Deleted dilation_rate=(2, 2) in this block
-    # Deleted 2nd Conv2D in this block
+    # Deconv Block 4T
+    x = Conv2DTranspose(512, (2,2), strides=(2,2), activation='relu', padding='same', name="block4T_deconv1", kernel_regularizer=l2(regularization))(x5)
+    x = Concatenate(axis=2)([x,x4])
+    x = Conv2D(512, (2,2), activation='relu', padding='same', name="block4T_conv1", kernel_regularizer=l2(regularization))(x)
+    x = Conv2D(256, (2,2), activation='relu', padding='same', name="block4T_conv2", kernel_regularizer=l2(regularization))(x)
+    x = Dropout(0.2)(x)
 
-    # 14 x 14 x 4096
+    # 28 x 28 x 512
 
-    # Deconv Block 4d
-    x4d = Conv2DTranspose(512, (3,3), strides=(1,1), activation='relu', padding='same', name="block4d_deconv", kernel_regularizer=l2(regularization))(x)
-    x = Add()([x4d, x4]) # can also make this x5
-    x = Dropout(0.3)(x)
-
-    # 14 x 14 x 512
-
-    # Deconv Block 2d
-    x2d = Conv2DTranspose(128, (3,3), strides=(4,4), activation='relu', padding='same', name="block2d_deconv", kernel_regularizer=l2(regularization))(x)
-    x = Add()([x2d, x2])
-    x = Dropout(0.3)(x)
+    # Deconv Block 3T
+    x = Conv2DTranspose(256, (2,2), strides=(2,2), activation='relu', padding='same', name="block3T_deconv1", kernel_regularizer=l2(regularization))(x)
+    x = Concatenate(axis=2)([x,x3])
+    x = Conv2D(256, (2,2), activation='relu', padding='same', name="block3T_conv1", kernel_regularizer=l2(regularization))(x)
+    x = Conv2D(128, (2,2), activation='relu', padding='same', name="block3T_conv2", kernel_regularizer=l2(regularization))(x)
+    x = Dropout(0.2)(x)
 
     # 56 x 56 x 128
 
-    # Deconv Block 3d
-    x1d = Conv2DTranspose(64, (3,3), strides=(2,2), activation='relu', padding='same', name="block1d_deconv", kernel_regularizer=l2(regularization))(x)
-    x = Add()([x1d, x1])
-    x = Dropout(0.3)(x)
+    # Deconv Block 2T
+    x = Conv2DTranspose(128, (2,2), strides=(2,2), activation='relu', padding='same', name="block2T_deconv1", kernel_regularizer=l2(regularization))(x)
+    x = Concatenate(axis=2)([x,x2])
+    x = Conv2D(128, (2,2), activation='relu', padding='same', name="block2T_conv1", kernel_regularizer=l2(regularization))(x)
+    x = Conv2D(64, (2,2), activation='relu', padding='same', name="block2T_conv2", kernel_regularizer=l2(regularization))(x)
+    x = Dropout(0.2)(x)
 
     # 112 x 112 x 64
 
+    # Deconv Block 1T
+    x = Conv2DTranspose(64, (2,2), strides=(2,2), activation='relu', padding='same', name="block1T_deconv1", kernel_regularizer=l2(regularization))(x)
+    x = Concatenate(axis=2)([x,x1])
+    x = Conv2D(64, (2,2), activation='relu', padding='same', name="block1T_conv1", kernel_regularizer=l2(regularization))(x)
+    x = Conv2D(64, (2,2), activation='relu', padding='same', name="block1T_conv2", kernel_regularizer=l2(regularization))(x)
+    x = Dropout(0.2)(x)
+
     # Classifying layer
-    x = Conv2DTranspose(classes, (1, 1), strides=(2, 2), activation='linear', padding='same', name='classes', kernel_regularizer=l2(regularization), kernel_initializer='he_normal')(x)
+    x = Conv2DTranspose(classes, (1, 1), activation='linear', padding='same', name='classes', kernel_regularizer=l2(regularization), kernel_initializer='he_normal')(x)
     # changed activation
 
     model = Model(img_input, x)

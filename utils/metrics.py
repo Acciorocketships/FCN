@@ -50,6 +50,11 @@ def argmax_accuracy(y_true,y_pred):
 
 
 def softmax_crossentropy_loss(y_true,y_pred):
+    ### Higher weight penalizes misses for that class more ###
+    # Hit: y_pred[i]=1, log_softmax[i]=0; cross_entropy = 0
+    # Correct Rejection: y_pred=0, log_softmax=-inf; cross_entropy = 0
+    # Miss: y_pred[i]=1, log_softmax=-inf; cross_entropy = inf
+    # False Alarm: y_pred=0, log_softmax=0; cross_entropy = 0
     y_pred = K.reshape(y_pred, (-1, K.int_shape(y_pred)[-1]))
     log_softmax = tf.nn.log_softmax(y_pred)
     y_true = K.one_hot(tf.to_int32(K.flatten(y_true)), K.int_shape(y_pred)[-1])
