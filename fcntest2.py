@@ -4,7 +4,7 @@ from imgstream import Stream
 from fcn import *
 
 shape = (224,224,3)
-classifier = FCN(model='UNet',classes=8,input_shape=shape)
+classifier = FCN(model='unet',classes=8,input_shape=shape)
 
 labels = ['Nothing','Person','Ground','Drone','Tree','Building','Car','Sky']
 stream = Stream(mode='img',src='train/img')

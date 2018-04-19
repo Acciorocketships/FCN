@@ -36,7 +36,7 @@ class FCN:
 		elif 'unet' == model:
 			self.model = UNet(input_shape=input_shape,classes=classes,regularization=regularization)
 			if weights_path is None:
-				self.weights_path = 'weights/UNet' + str((input_shape[0],input_shape[1],classes)).replace(" ","").replace(",","-") + '.h5'
+				self.weights_path = 'weights/unet' + str((input_shape[0],input_shape[1],classes)).replace(" ","").replace(",","-") + '.h5'
 		# Load Weights
 		try:
 			self.model.load_weights(self.weights_path, by_name=True)
@@ -152,6 +152,7 @@ class FCN:
 				subprocess.Popen(["tensorboard","--logdir",tensorboard])
 				import webbrowser
 				webbrowser.open("http://localhost:6006",new=2)
+				# "ps aux | grep tensorboard", then "kill [process #]" if tensorboard fails to bind to port
 			except:
 				pass
 		if autosave:

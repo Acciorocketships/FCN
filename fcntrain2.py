@@ -1,4 +1,5 @@
 from fcn import *
+from utils.metrics import *
 
 model = 'unet'
 shape = (224,224,3)

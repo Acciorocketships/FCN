@@ -2,12 +2,12 @@ import numpy as np
 import os
 import sys
 import h5py
-from keras.models import Model
-from keras.regularizers import l2
-from keras.layers import *
+from tensorflow.python.keras.models import Model
+from tensorflow.python.keras.regularizers import l2
+from tensorflow.python.keras.layers import *
 from keras.engine import Layer
-from keras.applications.vgg16 import *
-from keras.models import *
+from tensorflow.python.keras.applications.vgg16 import *
+from tensorflow.python.keras.models import *
 from keras.applications.imagenet_utils import _obtain_input_shape
 import keras.backend as K
 import tensorflow as tf
@@ -203,7 +203,7 @@ def UNet(input_shape=(224,224,3), classes=1, weights_path=None, regularization=0
 
     # Deconv Block 4T
     x = Conv2DTranspose(512, (2,2), strides=(2,2), activation='relu', padding='same', name="block4T_deconv1", kernel_regularizer=l2(regularization))(x5)
-    x = Concatenate(axis=2)([x,x4])
+    x = Concatenate(axis=3)([x,x4])
     x = Conv2D(512, (2,2), activation='relu', padding='same', name="block4T_conv1", kernel_regularizer=l2(regularization))(x)
     x = Conv2D(256, (2,2), activation='relu', padding='same', name="block4T_conv2", kernel_regularizer=l2(regularization))(x)
     x = Dropout(0.2)(x)
@@ -212,7 +212,7 @@ def UNet(input_shape=(224,224,3), classes=1, weights_path=None, regularization=0
 
     # Deconv Block 3T
     x = Conv2DTranspose(256, (2,2), strides=(2,2), activation='relu', padding='same', name="block3T_deconv1", kernel_regularizer=l2(regularization))(x)
-    x = Concatenate(axis=2)([x,x3])
+    x = Concatenate(axis=3)([x,x3])
     x = Conv2D(256, (2,2), activation='relu', padding='same', name="block3T_conv1", kernel_regularizer=l2(regularization))(x)
     x = Conv2D(128, (2,2), activation='relu', padding='same', name="block3T_conv2", kernel_regularizer=l2(regularization))(x)
     x = Dropout(0.2)(x)
@@ -221,7 +221,7 @@ def UNet(input_shape=(224,224,3), classes=1, weights_path=None, regularization=0
 
     # Deconv Block 2T
     x = Conv2DTranspose(128, (2,2), strides=(2,2), activation='relu', padding='same', name="block2T_deconv1", kernel_regularizer=l2(regularization))(x)
-    x = Concatenate(axis=2)([x,x2])
+    x = Concatenate(axis=3)([x,x2])
     x = Conv2D(128, (2,2), activation='relu', padding='same', name="block2T_conv1", kernel_regularizer=l2(regularization))(x)
     x = Conv2D(64, (2,2), activation='relu', padding='same', name="block2T_conv2", kernel_regularizer=l2(regularization))(x)
     x = Dropout(0.2)(x)
@@ -230,13 +230,13 @@ def UNet(input_shape=(224,224,3), classes=1, weights_path=None, regularization=0
 
     # Deconv Block 1T
     x = Conv2DTranspose(64, (2,2), strides=(2,2), activation='relu', padding='same', name="block1T_deconv1", kernel_regularizer=l2(regularization))(x)
-    x = Concatenate(axis=2)([x,x1])
+    x = Concatenate(axis=3)([x,x1])
     x = Conv2D(64, (2,2), activation='relu', padding='same', name="block1T_conv1", kernel_regularizer=l2(regularization))(x)
     x = Conv2D(64, (2,2), activation='relu', padding='same', name="block1T_conv2", kernel_regularizer=l2(regularization))(x)
     x = Dropout(0.2)(x)
 
     # Classifying layer
-    x = Conv2DTranspose(classes, (1, 1), activation='linear', padding='same', name='classes', kernel_regularizer=l2(regularization), kernel_initializer='he_normal')(x)
+    x = Conv2D(classes, (1, 1), activation='linear', padding='same', name='classes', kernel_regularizer=l2(regularization), kernel_initializer='he_normal')(x)
     # changed activation
 
     model = Model(img_input, x)

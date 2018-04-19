@@ -49,6 +49,11 @@ def argmax_accuracy(y_true,y_pred):
     return K.sum(tf.to_float(K.equal(K.argmax(y_true, axis=-1), K.argmax(y_pred, axis=-1)))) / tf.to_float(tf.shape(y_true)[0])
 
 
+def testsize(y_true,y_pred):
+    # Makes incompatible shapes error more informative.
+    return K.sum(tf.to_float(K.equal(K.argmax(y_true,axis=-1),K.argmax(y_pred,axis=-1))))
+
+
 def softmax_crossentropy_loss(y_true,y_pred):
     ### Higher weight penalizes misses for that class more ###
     # Hit: y_pred[i]=1, log_softmax[i]=0; cross_entropy = 0
