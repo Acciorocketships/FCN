@@ -2,12 +2,12 @@ import numpy as np
 import os
 import sys
 import h5py
-from tensorflow.python.keras.models import Model
-from tensorflow.python.keras.regularizers import l2
-from tensorflow.python.keras.layers import *
+from keras.models import Model
+from keras.regularizers import l2
+from keras.layers import *
 from keras.engine import Layer
-from tensorflow.python.keras.applications.vgg16 import *
-from tensorflow.python.keras.models import *
+from keras.applications.vgg16 import *
+from keras.models import *
 from keras.applications.imagenet_utils import _obtain_input_shape
 import keras.backend as K
 import tensorflow as tf

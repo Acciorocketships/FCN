@@ -143,6 +143,7 @@ class FCN:
 			  normalization=False,sample_normalization=False,
 			  savedir=None,tensorboard=None,learning_rate=None,autosave=False,
 			  callbacks=[]):
+		epochs += initial_epoch
 		if not isinstance(callbacks,list):
 			callbacks = [callbacks]
 		if tensorboard is not None:
