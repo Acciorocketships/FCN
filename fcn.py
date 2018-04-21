@@ -33,6 +33,11 @@ class FCN:
 		elif 'res50' == model:
 			self.model = Resnet50(input_shape=input_shape,classes=classes,regularization=regularization)
 			self.weights_path = Resnet50_weights(input_shape=input_shape,weights_path=weights_path,model=self.model)
+		elif 'vgg16fcn' == model:
+			self.model = Vgg16FCN(input_shape=input_shape,classes=classes,regularization=regularization)
+			if weights_path is None:
+				weights_path = 'weights/vgg16fcn' + str((input_shape[0],input_shape[1],classes)).replace(" ","").replace(",","-") + '.h5'
+			self.weights_path = Vgg16_weights(input_shape=input_shape,weights_path=weights_path,model=self.model)
 		elif 'unet' == model:
 			self.model = UNet(input_shape=input_shape,classes=classes,regularization=regularization)
 			if weights_path is None:
