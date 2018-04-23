@@ -4,4 +4,4 @@ h5py
 matplotlib
 Pillow
 scikit-image
-cv2
+opencv-python

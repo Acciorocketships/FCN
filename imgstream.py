@@ -1,7 +1,8 @@
-import sys 
+import sys
 import os 
 import cv2 
 import numpy as np 
+sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
  
 class Stream: 
 
