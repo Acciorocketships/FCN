@@ -105,7 +105,7 @@ class SegDirectoryIterator(Iterator):
                  data_format='default', class_mode='sparse',
                  batch_size=1, shuffle=True, seed=None,
                  save_to_dir=None, save_prefix='', save_format='jpeg',
-                 loss_shape=None):
+                 loss_shape=None, swaps={}):
         if data_format == 'default':
             data_format = K.image_data_format()
         self.file_path = file_path
@@ -127,6 +127,7 @@ class SegDirectoryIterator(Iterator):
         self.data_format = data_format
         self.nb_label_ch = 1
         self.loss_shape = loss_shape
+        self.swaps = swaps
 
         if (self.label_suffix == '.npy') or (self.label_suffix == 'npy'):
             self.label_file_format = 'npy'
@@ -263,6 +264,9 @@ class SegDirectoryIterator(Iterator):
             if self.ignore_label:
                 y[np.where(y == self.ignore_label)] = self.classes
 
+            for oldidx, newidx in self.swaps.items():
+                y[np.where(y == oldidx)] = newidx
+
             if self.loss_shape is not None:
                 y = np.reshape(y, self.loss_shape)
 
@@ -316,7 +320,8 @@ class SegDataGenerator(object):
                  horizontal_flip=False,
                  vertical_flip=False,
                  rescale=None,
-                 data_format='default'):
+                 data_format='default',
+                 swaps={}):
         if data_format == 'default':
             data_format = K.image_data_format()
         self.__dict__.update(locals())
@@ -373,7 +378,8 @@ class SegDataGenerator(object):
             batch_size=batch_size, shuffle=shuffle, seed=seed,
             save_to_dir=save_to_dir, save_prefix=save_prefix,
             save_format=save_format,
-            loss_shape=loss_shape)
+            loss_shape=loss_shape,
+            swaps=self.swaps)
 
     def standardize(self, x):
         if self.rescale:

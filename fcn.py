@@ -16,41 +16,36 @@ os.environ["CUDA_VISIBLE_DEVICES"] = ""
 class FCN:
 
 	def __init__(self,model='vgg16',classes=1,input_shape=(224,224,3),optimizer=None,loss=None,accuracy=None,
-				 learning_rate=0.001,regularization=0.,weights_path=None,loss_weights=None,loss_size_weight=0):
+				 learning_rate=0.001,regularization=0.,weights_path=None,loss_weights={},loss_size_weight=0,class_swaps={}):
 		self.input_shape = input_shape
 		self.classes = classes
 		self.weights_path = weights_path
-		# Load Model
-		if isinstance(model,Model):
+		# Load Existing Model
+		if model in globals():
+			FCNFUNC = globals()[model]
+			self.model = FCNFUNC(input_shape=input_shape,classes=classes,regularization=regularization)
+			if self.weights_path is None:
+				self.weights_path = 'weights/' + model + str((input_shape[0],input_shape[1],classes)).replace(" ","").replace(",","-") + '.h5'
+		# Custom Model
+		elif isinstance(model,Model):
 			self.weights_path = 'custom_model.h5'
 			self.model = model
-		elif 'vgg16' == model:
-			self.model = Vgg16(input_shape=input_shape,classes=classes,regularization=regularization)
-			self.weights_path = Vgg16_weights(input_shape=input_shape,weights_path=weights_path,model=self.model)
-		elif 'vgg19' == model:
-			self.model = Vgg19(input_shape=input_shape,classes=classes,regularization=regularization)
-			self.weights_path = Vgg19_weights(input_shape=input_shape,weights_path=weights_path,model=self.model)
-		elif 'res50' == model:
-			self.model = Resnet50(input_shape=input_shape,classes=classes,regularization=regularization)
-			self.weights_path = Resnet50_weights(input_shape=input_shape,weights_path=weights_path,model=self.model)
-		elif 'vgg16fcn' == model:
-			self.model = Vgg16FCN(input_shape=input_shape,classes=classes,regularization=regularization)
-			if weights_path is None:
-				weights_path = 'weights/vgg16fcn' + str((input_shape[0],input_shape[1],classes)).replace(" ","").replace(",","-") + '.h5'
-			self.weights_path = Vgg16_weights(input_shape=input_shape,weights_path=weights_path,model=self.model)
-		elif 'unet' == model:
-			self.model = UNet(input_shape=input_shape,classes=classes,regularization=regularization)
-			if weights_path is None:
-				self.weights_path = 'weights/unet' + str((input_shape[0],input_shape[1],classes)).replace(" ","").replace(",","-") + '.h5'
 		# Load Weights
 		try:
 			self.model.load_weights(self.weights_path, by_name=True)
 		except OSError as err:
 			print("No weights to load.")
-			print(err)
+			# Pretrained Weights
+			if 'vgg16' in model.lower():
+				Vgg16_weights(input_shape=input_shape,weights_path=self.weights_path,model=self.model)
+			elif 'vgg19' in model.lower():
+				Vgg19_weights(input_shape=input_shape,weights_path=self.weights_path,model=self.model)
+			elif 'res50' in model:
+				Resnet50_weights(input_shape=input_shape,weights_path=self.weights_path,model=self.model)
 		# Set Up Loss, Optimizer, and Metrics
 		LossWeights.setValues(loss_weights)
 		LossWeights.setSizeWeight(loss_size_weight)
+		self.swaps = class_swaps
 		if loss is None:
 			loss = softmax_crossentropy_loss
 		if optimizer is None:
@@ -82,7 +77,7 @@ class FCN:
                                  samplewise_center=sample_normalization,
                                  samplewise_std_normalization=sample_normalization,
                                  channel_shift_range=colorshift,
-                                 fill_mode='constant')
+                                 fill_mode='constant',swaps=self.swaps)
 		if normalization:
 			from imgstream import Stream
 			stream = Stream(mode='img',src='data_dir')

@@ -2,7 +2,7 @@ import sys
 import os 
 import cv2 
 import numpy as np 
-sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
+#sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
  
 class Stream: 
 
@@ -152,7 +152,7 @@ class Stream:
       maskout = np.zeros([3,mask.shape[0],mask.shape[1]]) 
       if len(mask.shape)==2: 
         mask = np.expand_dims(mask,axis=2)
-      if mask.shape[2]==1 and image==None:
+      if (mask.shape[2]==1) and (image is None):
         colors[0] = [1,1,1]
       if image is None: 
         image = np.zeros((mask.shape[0],mask.shape[1],3)) 
