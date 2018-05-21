@@ -258,9 +258,6 @@ class SegDirectoryIterator(Iterator):
                 else:
                     batch_y = np.zeros((current_batch_size,) + y.shape)
 
-            x, y = self.seg_data_generator.random_transform(x, y)
-            x = self.seg_data_generator.standardize(x)
-
             if self.ignore_label:
                 y[np.where(y == self.ignore_label)] = self.classes
 
@@ -269,6 +266,9 @@ class SegDirectoryIterator(Iterator):
 
             if self.loss_shape is not None:
                 y = np.reshape(y, self.loss_shape)
+
+            x, y = self.seg_data_generator.random_transform(x, y)
+            x = self.seg_data_generator.standardize(x)
 
             batch_x[i] = x
             batch_y[i] = y
@@ -356,6 +356,8 @@ class SegDataGenerator(object):
             raise Exception('zoom_range should be a float or '
                             'a tuple or list of two floats. '
                             'Received arg: ', zoom_range)
+        self.swaps = swaps
+
 
     def flow_from_directory(self, data_dir, label_dir, file_path, classes, 
                             data_suffix='.jpg', label_suffix='.png',
@@ -365,8 +367,7 @@ class SegDataGenerator(object):
                             batch_size=32, shuffle=True, seed=None,
                             save_to_dir=None, save_prefix='', save_format='jpeg',
                             loss_shape=None):
-        if self.crop_mode == 'random' or self.crop_mode == 'center':
-            target_size = self.crop_size
+        target_size = self.crop_size   # if self.crop_mode == 'random' or self.crop_mode == 'center':
         return SegDirectoryIterator(
             file_path, self,
             data_dir=data_dir,label_dir=label_dir, classes=classes, 

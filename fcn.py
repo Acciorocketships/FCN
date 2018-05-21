@@ -8,6 +8,7 @@ from utils.models import *
 from utils.downloadWeights import *
 from utils.segdatagen import *
 from utils.metrics import *
+from utils.callbacks import *
 from skimage.transform import resize
 
 os.environ["CUDA_VISIBLE_DEVICES"] = ""
@@ -65,12 +66,13 @@ class FCN:
 	def datagen(self,data_dir,label_dir,file_txt,batch_size=8,
 				zoom=0.,rotation=0,shear=0.,xflip=False,yflip=False,
 				normalization=False,sample_normalization=False,
-				colorshift=0.,savedir=None):
-		self.gen = SegDataGenerator(zoom_range=zoom,
+				colorshift=0.,savedir=None,show=False):
+		model = self.model if show else None
+		self.gen = SegDataGenerator(zoom_range=zoom, # zoomxy (float) or [zx,zy] (tuple, range of zoom). zoomxy -> [1-zoomxy,1+zoomxy]. zoomxy=0 is no zoom.
                                  zoom_maintain_shape=True,
-                                 crop_mode='random',
+                                 crop_mode='none', # 'none' will resize to crop_size, 'random' and 'center' will take chunks of crop_size without resizing
                                  crop_size=self.input_shape[0:2],
-                                 rotation_range=rotation,
+                                 rotation_range=rotation, # max possible rotation in degrees. (180 means +/- 180 degrees)
                                  shear_range=shear,
                                  horizontal_flip=xflip,
                                  vertical_flip=yflip,
@@ -79,7 +81,8 @@ class FCN:
                                  samplewise_center=sample_normalization,
                                  samplewise_std_normalization=sample_normalization,
                                  channel_shift_range=colorshift,
-                                 fill_mode='constant',swaps=self.swaps)
+                                 fill_mode='constant',
+                                 swaps=self.swaps)
 		if normalization:
 			from imgstream import Stream
 			stream = Stream(mode='img',src='data_dir')
@@ -99,7 +102,6 @@ class FCN:
 			  			 zoom=0,rotation=0,shear=0,xflip=False,yflip=False,
 			  			 normalization=False,sample_normalization=False,
 			  			 colorshift=0,savedir=None):
-
 		labels = []
 		if val_split is not None:
 			data = self.dir_images(data_dir)
@@ -144,7 +146,7 @@ class FCN:
 			  zoom=0,rotation=0,shear=0,xflip=False,yflip=False,colorshift=0,
 			  normalization=False,sample_normalization=False,
 			  savedir=None,tensorboard=None,learning_rate=None,autosave=False,
-			  callbacks=[]):
+			  callbacks=[],show=False):
 		epochs += initial_epoch
 		if not isinstance(callbacks,list):
 			callbacks = [callbacks]
@@ -165,6 +167,10 @@ class FCN:
 				callbacks.append(LearningRateScheduler(lambda epoch: learning_rate, verbose=1))
 			else:
 				callbacks.append(LearningRateScheduler(learning_rate, verbose=1))
+		if show:
+			if show is True:
+				show = data_dir
+			callbacks.append(Visualization(show,self))
 		gen = self.train_generators(data_dir,label_dir,val_split,batch_size=batch_size,zoom=zoom,rotation=rotation,shear=shear, \
 									xflip=xflip,yflip=yflip,normalization=normalization,sample_normalization=sample_normalization,
 									colorshift=colorshift,savedir=savedir)
