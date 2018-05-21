@@ -30,6 +30,8 @@ class FCN:
 		elif isinstance(model,Model):
 			self.weights_path = 'custom_model.h5'
 			self.model = model
+		else:
+			print(str(model) + ": No Matching Model Found.")
 		# Load Weights
 		try:
 			self.model.load_weights(self.weights_path, by_name=True)

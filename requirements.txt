@@ -5,3 +5,4 @@ matplotlib
 Pillow
 scikit-image
 opencv-python
+opencv-contrib-python

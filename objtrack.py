@@ -107,8 +107,8 @@ class Object:
 
 if __name__ == '__main__':
 	tracker = Tracker()
-	stream = Stream(mode='img',src='facetest')
-	classifier = FCN(model='vgg16',classes=8,input_shape=(224,224,3))
+	stream = Stream(mode='cam',src='facetest')
+	classifier = FCN(model='Vgg16',classes=8,input_shape=(224,224,3))
 	for i,img in enumerate(stream):
 		if i % 5 == 0:
 			mask = classifier.predict(img)
