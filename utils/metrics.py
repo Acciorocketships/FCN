@@ -69,6 +69,14 @@ def softmax_crossentropy_loss(y_true,y_pred):
     return cross_entropy_mean # + false_alarms_mean
 
 
+def regression_mean_squared_loss(y_true,y_pred):
+    y_pred = tf.to_int32(K.reshape(y_pred, (-1, K.int_shape(y_pred)[-1])))
+    y_true = tf.to_int32(K.reshape(y_true, (-1, K.int_shape(y_pred)[-1])))
+    sqdiff = K.square(y_pred - y_true)
+    mse = K.mean(sqdiff)
+    return mse
+
+
 # X: ndarray
 # axis: axis to compute values along. Default is the first non-singleton axis.
 def softmax(X, axis=None):

@@ -16,8 +16,11 @@ os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
 class FCN:
 
-	def __init__(self,model='vgg16',classes=1,input_shape=(224,224,3),optimizer=None,loss=None,accuracy=None,
-				 learning_rate=0.001,regularization=0.,weights_path=None,loss_weights={},loss_size_weight=0,class_swaps={}):
+	def __init__(self,model='vgg16',classes=1,input_shape=(224,224,3),
+				 optimizer=None,loss=None,accuracy=None,
+				 learning_rate=0.001,regularization=0.,weights_path=None,
+				 loss_weights={},loss_size_weight=0,class_swaps={},
+				 regression=False):
 		self.input_shape = input_shape
 		self.classes = classes
 		self.weights_path = weights_path
@@ -50,10 +53,13 @@ class FCN:
 		LossWeights.setSizeWeight(loss_size_weight)
 		self.swaps = class_swaps
 		if loss is None:
-			loss = softmax_crossentropy_loss
+			if regression:
+				loss = regression_mean_squared_loss
+			else:
+				loss = softmax_crossentropy_loss
 		if optimizer is None:
 			optimizer = SGD(lr=learning_rate, momentum=0.9)
-		if accuracy is None:
+		if accuracy is None and not regression:
 			accuracy = [argmax_accuracy]
 		else:
 			accuracy = [accuracy]

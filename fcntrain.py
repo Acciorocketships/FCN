@@ -9,4 +9,4 @@ classifier = FCN(model=model,classes=classes,input_shape=shape,loss_size_weight=
 classifier.train('train/droneimg','train/dronelabel',epochs=300,initial_epoch=0,val_split=0.1,
 				 zoom=0.0,rotation=180,shear=0.3,colorshift=0.3,autosave=True,learning_rate=1e-3,
 				 tensorboard='weights/tensorboard/' + model + '-' + str(shape[0]) + '-' + str(shape[1]) + '-' + str(classes),
-				 show='train/droneimg/64.jpg')
+				 show=False)
