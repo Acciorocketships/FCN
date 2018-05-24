@@ -43,5 +43,5 @@ for img in stream:
   confidence = Stream.mask(mask[:,:,1:], img, alpha=0.2, argmax=False, labels=labels[1:])
   
   # Show masked image
-  Stream.show(confidence,"Confidence",pause=False,shape=(shape[:2]))
+  Stream.show(confidence,"Confidence",pause=False)
 ```
