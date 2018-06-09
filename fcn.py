@@ -1,5 +1,6 @@
 import os,sys
 sys.path.append(os.path.dirname(os.path.realpath("")))
+
 from random import randrange
 from keras.callbacks import TensorBoard, ModelCheckpoint, LearningRateScheduler
 from keras.models import Model
@@ -11,6 +12,7 @@ from utils.metrics import *
 from utils.callbacks import *
 from skimage.transform import resize
 
+# Use CPU:
 os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
 
@@ -61,8 +63,10 @@ class FCN:
 			optimizer = SGD(lr=learning_rate, momentum=0.9)
 		if accuracy is None and not regression:
 			accuracy = [argmax_accuracy]
-		else:
+		elif accuracy is not None:
 			accuracy = [accuracy]
+		else:
+			accuracy = []
 		self.model.compile(loss=loss,
 					  optimizer=optimizer,
 					  metrics=accuracy)

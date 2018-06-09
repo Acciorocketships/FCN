@@ -381,6 +381,7 @@ def Vgg16Multiscale(input_shape=(224,224,3), classes=1, regularization=0.):
 	return model
 
 
+
 def Vgg16_8s(input_shape=(224,224,3), classes=1, regularization=0.):
 	img_input = Input(shape=input_shape)
 	image_size = input_shape[0:2]
